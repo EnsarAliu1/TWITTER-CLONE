@@ -1,0 +1,28 @@
+import express from "express";
+import { protectRoute } from "../middleware/protectRoute.js";
+import { comment } from "postcss";
+import {
+  createPost,
+  deletePost,
+  commentOnPost,
+  likeUnlikePost,
+  getAllPosts,
+  getLikesPosts,
+  getFollowingPosts,
+  getUserPosts,
+} from "../controllers/post.controller.js";
+import { get } from "mongoose";
+
+const router = express.Router();
+
+router.get("/all", protectRoute, getAllPosts);
+router.get("/following", protectRoute, getFollowingPosts);
+router.get("/likes/:id", protectRoute, getLikesPosts);
+router.get("/user/:username", protectRoute, getUserPosts);
+
+router.post("/create", protectRoute, createPost);
+router.post("/like/:id", protectRoute, likeUnlikePost);
+router.post("/comment/:id", protectRoute, commentOnPost);
+router.delete("/:id", protectRoute, deletePost);
+
+export default router;
