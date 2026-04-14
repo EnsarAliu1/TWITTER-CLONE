@@ -1,4 +1,3 @@
-import { text } from "express";
 import mongoose from "mongoose";
 
 const postSchema = new mongoose.Schema(
@@ -11,7 +10,7 @@ const postSchema = new mongoose.Schema(
     text: {
       type: String,
     },
-    image: {
+    img: {
       type: String,
     },
     likes: [

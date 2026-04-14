@@ -10,13 +10,29 @@ const CreatePost = () => {
 	const [img, setImg] = useState(null);
 	const imgRef = useRef(null);
 
-	const { data: authUser } = useQuery({ queryKey: ["authUser"] });
+	const { data: authUser } = useQuery({
+		queryKey: ["authUser"],
+		queryFn: async () => {
+			try {
+				const res = await fetch("/api/auth/me");
+				const data = await res.json();
+				if (data.error) return null;
+				if (!res.ok) {
+					throw new Error(data.error || "Something went wrong");
+				}
+				return data;
+			} catch (error) {
+				throw new Error(error);
+			}
+		},
+		retry: false,
+	});
 	const queryClient = useQueryClient();
 
 	const { mutate: createPost, isPending, isError, error } = useMutation({
 		mutationFn: async ({ text, img }) => {
 			try {
-				const res = await fetch("api/posts/create", {
+				const res = await fetch("/api/posts/create", {
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
