@@ -74,7 +74,7 @@ export const getSuggestedUsers = async (req, res) => {
     const users = await User.aggregate([
       {
         $match: {
-          _id: { $ne: userId },
+          _id: { $ne: userId, $nin: usersFollowedByMe.following },
         },
       },
       {
@@ -82,11 +82,7 @@ export const getSuggestedUsers = async (req, res) => {
       },
     ]);
 
-    const filteredUsers = users.filter((user) =>
-      usersFollowedByMe.following.includes(user._id),
-    );
-    const suggestedUsers = filteredUsers.slice(0, 4);
-
+    const suggestedUsers = users.slice(0, 4);
     suggestedUsers.forEach((user) => (user.password = null));
 
     res.status(200).json(suggestedUsers);
