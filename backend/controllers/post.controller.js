@@ -86,6 +86,15 @@ export const commentOnPost = async (req, res) => {
     post.comments.push(comment);
     await post.save();
 
+    if (post.user.toString() !== userId.toString()) {
+      const notification = new Notification({
+        from: userId,
+        to: post.user,
+        type: "like", // Using 'like' for now as the front-end only supports follow/like icons
+      });
+      await notification.save();
+    }
+
     res.status(200).json(post);
   } catch (error) {
     console.log("Error in commentOnPost controller:", error);
@@ -121,12 +130,14 @@ export const likeUnlikePost = async (req, res) => {
       await User.updateOne({ _id: userId }, { $push: { likedPosts: postId } });
       await post.save();
 
-      const notification = new Notification({
-        from: userId,
-        to: post.user,
-        type: "like",
-      });
-      await notification.save();
+      if (post.user.toString() !== userId.toString()) {
+        const notification = new Notification({
+          from: userId,
+          to: post.user,
+          type: "like",
+        });
+        await notification.save();
+      }
 
       const updatedLikes = post.likes;
       res.status(200).json(updatedLikes);
