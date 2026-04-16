@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import LoadingSpinner from "./LoadingSpinner"
+import { formatPostDate } from "../../utils/date/index.js";
 
 const Post = ({ post }) => {
 	const [comment, setComment] = useState("");
@@ -30,7 +31,7 @@ const Post = ({ post }) => {
 	});
 	const queryClient = useQueryClient();
 
-	const { mutate: deletePost, isPending: isDeleting, error } = useMutation({
+	const { mutate: deletePost, isPending: isDeleting, } = useMutation({
 		mutationFn: async () => {
 			try {
 				const res = await fetch(`/api/posts/${post._id}`, {
@@ -80,19 +81,47 @@ const Post = ({ post }) => {
 				});
 			});
 		},
-		onError: () => {
+		onError: (error) => {
 			toast.error(error.message) 
 		}
 	})
 
+	const { mutate: commentPost, isPending: isCommenting } = useMutation({
+		mutationFn: async () => {
+			try {
+				const res = await fetch(`/api/posts/comment/${post._id}`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({text: comment}),
+				})
+				const data = await res.json();
+				if (!res.ok) {
+					throw new Error(data.error || "Something went wrong");
+				}
+				return data
+			} catch (error) {
+				throw new Error(error.message);
+			}
+		},
+		onSuccess: () => {
+			toast.success("Comment posted succesfully");
+			setComment("");
+			queryClient.invalidateQueries({ queryKey:["posts"]})
+		},
+		onError: (error) => {
+			toast.error(error.message);
+		}
+	})
+
 	const postOwner = post.user;
-	const isLiked = post.likes.includes(authUser._id);
+	const isLiked = authUser && post.likes.includes(authUser?._id);
 
-	const isMyPost = authUser._id === post.user._id;
+	const isMyPost = authUser && authUser?._id === post.user?._id;
 
-	const formattedDate = "1h";
+	const formattedDate = formatPostDate(post.createdAt);
 
-	const isCommenting = true;
 
 	const handleDeletePost = () => {
 		deletePost();
@@ -100,6 +129,8 @@ const Post = ({ post }) => {
 
 	const handlePostComment = (e) => {
 		e.preventDefault();
+		if (isCommenting) return;
+		commentPost();
 	};
 
 	const handleLikePost = () => {
@@ -171,15 +202,15 @@ const Post = ({ post }) => {
 												<div className='avatar'>
 													<div className='w-8 rounded-full'>
 														<img
-															src={comment.user.profileImg || "/avatar-placeholder.png"}
+															src={comment.user?.profileImg || "/avatar-placeholder.png"}
 														/>
 													</div>
 												</div>
 												<div className='flex flex-col'>
 													<div className='flex items-center gap-1'>
-														<span className='font-bold'>{comment.user.fullName}</span>
+														<span className='font-bold'>{comment.user?.fullName}</span>
 														<span className='text-gray-700 text-sm'>
-															@{comment.user.username}
+															@{comment.user?.username}
 														</span>
 													</div>
 													<div className='text-sm'>{comment.text}</div>
